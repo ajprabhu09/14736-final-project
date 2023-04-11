@@ -15,7 +15,7 @@
 // your own content!
 
 = Introduction
-
+In this project we aim to create a pub sub system using Golang
 === Contributions
 
 = Related Work
