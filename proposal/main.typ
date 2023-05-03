@@ -35,7 +35,10 @@ The topic servers will first register with the naming server with the topic they
 
 The Topic servers will replicate their data across multiple instances so as to maintain fault tolerance in the event a topic server fails and is uncommunicative the client will automatically request the naming server for a new topic server with the same topic and try to recover.
 
-Each topic server will also replicate which clients have read certain messages. To make sure that deletions are consistent across all replicated topic servers the topic servers will only delete messages in topics after all clients connected to a topic have read the message. A way in which this can be achieved is if all clients connected to a topic server have been marked as having seen the message the topic server can delete the message and ask other servers to delete the message themselves. If all other server's clients have also the message then they also will delete those messages.
+Our initial plan was to have topic servers automatically delete messages, but we found that topic servers can get away without needing to store messages by simply adopting a push model. This has two benefits the onus of starvation is on the publisher and the subscriber can simply idle wait for messages. This greatly simplifies the subsriber design as it is another rpc server with its ip on the topic server. Futhermore a push model can reduce complexity on the topic server architecture by using it as a forwarding server. Replication is also simplified as topic servers only need to know peers who are serving a given topic and only forward published messages to them.
+
+
+
 
 == Project Plan and Testing and evaluation
 1.  Implement the naming server, Server will hold in a key-value store the details mentioned above
@@ -43,16 +46,30 @@ Each topic server will also replicate which clients have read certain messages. 
 3. Implement replication of messages between topic servers and forwarding messages to clients on the same topic but different servers
 4.  Testing with unit tests and regressions tests which check for the following \
     - Checkpoint
-      - Topic Server Creation
-      - Register on the naming server - 20
-      - Communication between client and topic server - 20
-    - Final
-      - Topic server replication - 25
-      - Topic server message production - 20
-      - Topic server message deletion - 20
-      - Topic server message consumption - 20
+      - Register on the naming server - 10  - `test_checks_if_topic_server_registers_with_naming_server_on_startup`
 
-== Tooling (Subject to change based on Course staff approval)
+      - Naming Server Notifying Topic servers of new peer on topic - 20 
+      `test_naming_server_communicates_replication_server_to_all_servers`
+
+      - Topic server replication - 25
+      `test_should_replicate_messages`
+
+      - Topic server multiple subscribers - 30
+      `test_should_have_multiple_subscribers`
+
+      - Topic Server Multiple Pub-Sub and Replication - 35
+      `test_should_be_able_handle_multple_publishers_subscribers_and_replication`
+      
+      - Test Naming server registration RPC - 5
+      `test_should_register_topic_servers_with_naming_servers`
+      
+      - Test naming server start - 5
+      `test_start_naming_server`
+
+      - Test basic actors pub and sub - 20 
+      `test_should_setup_all_basic_actors_and_publish_subscribe`
+
+== Tooling 
 Language - We would like to use Rust \
 Libraries  
 - tokio for async and threading 
@@ -63,9 +80,6 @@ Makefile - will include how to build and test our project using the testing fram
 
 === Evaluation
 
-We do not have a concrete plan for evaluation but have a rough estimate on the points distribution above
-
-125 -  auto grading
-30 - documentation
+Testcases points - 165
 
           
